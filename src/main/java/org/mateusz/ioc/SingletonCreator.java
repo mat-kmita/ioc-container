@@ -16,7 +16,12 @@ public class SingletonCreator<To> extends AbstractCreator<To> {
         synchronized (this) {
             if(instance == null) {
 
-               Constructor<To> constructor = super.findNoArgConstructor();
+                Constructor<To> constructor;
+                try {
+                    constructor = super.findNoArgConstructor();
+                } catch (Exception e) {
+                    throw new Error("Couldn't construct object of type " + toClass.getName());
+                }
 
                 try {
                     instance = constructor.newInstance();

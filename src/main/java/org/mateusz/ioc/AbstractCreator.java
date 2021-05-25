@@ -12,13 +12,13 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         this.toClass = classObject;
     }
 
-    protected Constructor<To> findNoArgConstructor() {
+    protected Constructor<To> findNoArgConstructor() throws Exception {
         Constructor<To> constructor = (Constructor<To>) Arrays.stream(toClass.getConstructors()).
                 min(Comparator.comparingInt(Constructor::getParameterCount))
-                .orElseThrow(IllegalAccessError::new);
+                .orElseThrow(() -> new Exception("No constructor found inside " + toClass.getName()));
 
         if(constructor.getParameterCount() != 0) {
-            throw new IllegalArgumentException("There is no 0 argument exception!");
+            throw new Error("No 0 arguments constructor found inside " + toClass.getName());
         }
 
         return constructor;

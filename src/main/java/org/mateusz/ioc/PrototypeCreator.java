@@ -12,10 +12,15 @@ public class PrototypeCreator<To> extends AbstractCreator<To> {
 
     @Override
     public To create() {
-        Constructor<To> constructor = super.findNoArgConstructor();
+        Constructor<To> constructor;
+        try {
+            constructor = super.findNoArgConstructor();
+        } catch (Exception e) {
+            throw new Error("Couldn't construct object of type " + toClass.getName());
+        }
 
         try {
-            return (To) constructor.newInstance();
+            return constructor.newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
