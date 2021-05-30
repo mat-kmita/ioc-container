@@ -31,6 +31,12 @@ public class SimpleContainer implements Container {
         }
     }
 
+    public <T> void registerInstance(T instance) {
+        registeredTypes.remove(instance.getClass());
+
+        registeredTypes.put(instance.getClass(), new InstanceCreator<T>(instance, (Class<T>) instance.getClass(), this));
+    }
+
     public <T> T resolve(Class type) {
         System.out.println("Resolving: " + type);
 
