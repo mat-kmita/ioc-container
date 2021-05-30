@@ -1,31 +1,15 @@
 package org.mateusz.ioc;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 
 public class PrototypeCreator<To> extends AbstractCreator<To> {
 
-    public PrototypeCreator(Class<To> classObject) {
-        super(classObject);
+    public PrototypeCreator(Class<To> classObject, Container container) {
+        super(classObject, container);
     }
-
 
     @Override
     public To create() {
-        Constructor<To> constructor;
-        try {
-            constructor = super.findNoArgConstructor();
-        } catch (Exception e) {
-            throw new Error("Couldn't construct object of type " + toClass.getName());
-        }
-
-        try {
-            return constructor.newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
-        // Shouldn't reach
-        return null;
+        return super.createObject(new ArrayList<>());
     }
 }

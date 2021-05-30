@@ -1,33 +1,28 @@
 package org.mateusz.ioc;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SingletonCreator<To> extends AbstractCreator<To> {
 
     private static Object instance = null;
 
-    public SingletonCreator(Class<To> classObject) {
-        super(classObject);
+    public SingletonCreator(Class<To> classObject, Container container) {
+        super(classObject, container);
     }
 
     @Override
     public To create() {
+        this.createObject(new ArrayList<>());
+
+        return (To) instance;
+    }
+
+    @Override
+    protected To createObject(List<Class<?>> dependent) {
         synchronized (this) {
-            if(instance == null) {
-
-                Constructor<To> constructor;
-                try {
-                    constructor = super.findNoArgConstructor();
-                } catch (Exception e) {
-                    throw new Error("Couldn't construct object of type " + toClass.getName());
-                }
-
-                try {
-                    instance = constructor.newInstance();
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
+            if (instance == null) {
+                instance = super.createObject(dependent);
             }
         }
 

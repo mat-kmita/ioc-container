@@ -15,9 +15,9 @@ public class SimpleContainer implements Container {
         registeredTypes.remove(type);
 
         if(isSingleton) {
-            registeredTypes.put(type, new SingletonCreator<>(type));
+            registeredTypes.put(type, new SingletonCreator<>(type, this));
         } else {
-            registeredTypes.put(type, new PrototypeCreator<>(type));
+            registeredTypes.put(type, new PrototypeCreator<>(type, this));
         }
     }
 
@@ -25,9 +25,9 @@ public class SimpleContainer implements Container {
         registeredTypes.remove(from);
 
         if(isSingleton) {
-            registeredTypes.put(from, new SingletonCreator<>(to));
+            registeredTypes.put(from, new SingletonCreator<>(to, this));
         } else {
-            registeredTypes.put(from, new PrototypeCreator<>(to));
+            registeredTypes.put(from, new PrototypeCreator<>(to, this));
         }
     }
 
