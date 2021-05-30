@@ -3,7 +3,7 @@ package org.mateusz.ioc;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SimpleContainer {
+public class SimpleContainer implements Container {
 
     private Map<Class, ICreator> registeredTypes;
 
@@ -41,4 +41,11 @@ public class SimpleContainer {
         return (T) registeredTypes.get(type).create();
     }
 
+
+    @Override
+    public <T> ICreator<T> getCreator(Class<T> type) {
+        if(!this.registeredTypes.containsKey(type)) throw new Error("Type not found in the container: " + type);
+
+        return this.registeredTypes.get(type);
+    }
 }
