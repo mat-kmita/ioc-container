@@ -1,5 +1,7 @@
 package org.mateusz.ioc;
 
+import java.util.Optional;
+
 public interface Container {
-    <T> ICreator<T> getCreator(Class<T> type);
+    Optional<ICreator<?>> getCreator(Class<?> type);
 }

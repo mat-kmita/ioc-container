@@ -2,10 +2,11 @@ package org.mateusz.ioc;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class SimpleContainer implements Container {
 
-    private Map<Class, ICreator> registeredTypes;
+    private final Map<Class, ICreator> registeredTypes;
 
     public SimpleContainer() {
         this.registeredTypes = new HashMap<>();
@@ -49,9 +50,7 @@ public class SimpleContainer implements Container {
 
 
     @Override
-    public <T> ICreator<T> getCreator(Class<T> type) {
-        if(!this.registeredTypes.containsKey(type)) throw new Error("Type not found in the container: " + type);
-
-        return this.registeredTypes.get(type);
+    public Optional<ICreator<?>> getCreator(Class<?> type) {
+        return Optional.ofNullable(this.registeredTypes.get(type));
     }
 }

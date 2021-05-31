@@ -30,10 +30,10 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
                 .collect(Collectors.toList());
     }
 
-    protected List<Constructor<To>> findMaxArgsConstructors() throws Exception {
+    protected List<Constructor<To>> findMaxArgsConstructors() {
         int max = Arrays.stream(toClass.getConstructors()).
                 mapToInt(Constructor::getParameterCount)
-                .max().orElseThrow(() -> new Exception("No constructors!"));
+                .max().orElse(0);
 
         return this.getAllConstructors().stream()
                 .filter(c -> c.getParameterCount() == max)
@@ -49,7 +49,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
             throw new Exception("Only one @DependencyConstructor is allowed!");
         }
 
-        if(annotatedConstructors.size() < 1) return Optional.empty();
+        if (annotatedConstructors.size() < 1) return Optional.empty();
         return Optional.ofNullable(annotatedConstructors.get(0));
     }
 
@@ -57,43 +57,40 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         return parameters.stream().noneMatch(dependent::contains);
     }
 
-    private boolean areAllParametersInContainer(List<Class<?>> parametersClasses) {
-        for (Class<?> aClass : parametersClasses) {
-            try {
-                this.container.getCreator(aClass);
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return true;
-    }
+    protected Constructor<To> findBestMatchConstructor(List<Class<?>> dependent) throws Exception {
+        List<Constructor<To>> constructorList;
+        constructorList = findMaxArgsConstructors();
 
-    protected Optional<Constructor<To>> findBestMatchConstructor(List<Class<?>> dependent) {
-        List<Constructor<To>> constructorList = null;
-        try {
-            constructorList = findMaxArgsConstructors();
-
-            Constructor<To> constructor = constructorList.stream()
-                    .filter(c -> hasNoCycle(dependent, Arrays.asList(c.getParameterTypes()))
-                            && areAllParametersInContainer(Arrays.asList(c.getParameterTypes())))
-                    .findFirst().orElse(null);
-            return Optional.ofNullable(constructor);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (constructorList.size() > 1) {
+            throw new Exception("More than one constructor is suitable for creating an object of type " + this.toClass);
         }
 
-        return Optional.empty();
+        if (constructorList.size() < 1) {
+            throw new Exception("No constructor found in " + this.toClass);
+        }
+
+        Constructor<To> constructor = constructorList.get(0);
+
+        if (!hasNoCycle(dependent, Arrays.asList(constructor.getParameterTypes()))) {
+            throw new Exception("Dependencies cycle detected in " + this.toClass);
+        }
+
+        return constructor;
     }
 
-    protected To createObject(List<Class<?>> dependent) {
+    private Object createObjectFromContainer(Class<?> aClass, List<Class<?>> updatedDependent) throws Exception {
+        Optional<ICreator<?>> optionalICreator = this.container.getCreator(aClass);
+        ICreator<?> creator = optionalICreator.orElseThrow(() -> new Exception(aClass + " not found in the given container!"));
+        return ((AbstractCreator<?>) creator).createObject(updatedDependent);
+    }
+
+    protected To createObject(List<Class<?>> dependent) throws Exception {
         Constructor<To> constructor = null;
         try {
-            constructor = findAnnotatedConstructor()
-                    .orElse(findBestMatchConstructor(dependent)
-                            .orElseThrow(() -> new Error("No valid constructor found for " + toClass))
-                    );
+            constructor = findAnnotatedConstructor().orElse(findBestMatchConstructor(dependent));
         } catch (Exception e) {
             e.printStackTrace();
+            throw new Exception("Couldn't create an object of type " + this.toClass);
         }
 
         List<Class<?>> updatedDependent = new ArrayList<>(dependent);
@@ -104,7 +101,13 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
                     .newInstance(
                             Arrays.stream(constructor.getParameterTypes())
                                     .map(aClass -> {
-                                        return ((AbstractCreator<?>)this.container.getCreator(aClass)).createObject(updatedDependent);
+                                        try {
+                                            return createObjectFromContainer(aClass, updatedDependent);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        return null;
                                     })
                                     .toArray()
                     );

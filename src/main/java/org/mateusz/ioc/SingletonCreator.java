@@ -13,13 +13,17 @@ public class SingletonCreator<To> extends AbstractCreator<To> {
 
     @Override
     public To create() {
-        this.createObject(new ArrayList<>());
-
-        return (To) instance;
+        try {
+            this.createObject(new ArrayList<>());
+            return (To) instance;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Error("Error while creating an object of class " + super.toClass);
+        }
     }
 
     @Override
-    protected To createObject(List<Class<?>> dependent) {
+    protected To createObject(List<Class<?>> dependent) throws Exception {
         synchronized (this) {
             if (instance == null) {
                 instance = super.createObject(dependent);
