@@ -1,5 +1,7 @@
 package org.mateusz.ioc;
 
+import org.mateusz.ioc.exceptions.NotInContainerException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -42,7 +44,7 @@ public class SimpleContainer implements Container {
         System.out.println("Resolving: " + type);
 
         if(!registeredTypes.containsKey(type)) {
-            throw new IllegalArgumentException("Invalid type " + type);
+            throw new NotInContainerException(type);
         }
 
         return (T) registeredTypes.get(type).create();
