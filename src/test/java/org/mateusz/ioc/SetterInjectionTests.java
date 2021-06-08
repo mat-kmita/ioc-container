@@ -1,6 +1,11 @@
 package org.mateusz.ioc;
 
 import org.junit.jupiter.api.Test;
+import org.mateusz.ioc.exceptions.DependenciesCycleException;
+import org.mateusz.ioc.exceptions.ObjectCreationException;
+import org.mateusz.ioc.exceptions.setter_injection.DependencyMethodException;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,23 +24,65 @@ public class SetterInjectionTests {
         assertNotNull(a.getC());
     }
 
-//    @Test
-//    public void shouldDetectCycleWhenUsingSetterInjection() {
-//        SimpleContainer c = new SimpleContainer();
-//
-//        c.registerType(SettersD.class, false);
-//        c.registerType(SettersE.class, false);
-//        assertThrows(Error.class, () -> c.resolve(SettersD.class));
-//    }
+    @Test
+    public void shouldDetectCycleWhenUsingSetterInjection() {
+        SimpleContainer c = new SimpleContainer();
 
-//    @Test
-//    public void shouldNotUseNotAnnotatedSetter() {
-//        SimpleContainer c = new SimpleContainer();
-//
-//        c.registerType();
-//
-//        assertNull();
-//    }
+        c.registerType(SettersD.class, false);
+        c.registerType(SettersE.class, false);
+        assertThrows(DependenciesCycleException.class, () -> c.resolve(SettersD.class));
+    }
+
+    @Test
+    public void shouldNotUseNotVoidSetter() {
+        SimpleContainer c = new SimpleContainer();
+
+        c.registerType(SettersNotVoid.class, false);
+        c.registerType(SettersC.class, false);
+
+        assertThrows(ObjectCreationException.class, () -> c.resolve(SettersNotVoid.class));
+    }
+
+    @Test
+    public void shouldNotUseNoArgumentsSetter() {
+        SimpleContainer c = new SimpleContainer();
+
+        c.registerType(SettersNoArguments.class, false);
+        c.registerType(SettersB.class, true);
+
+        assertThrows(ObjectCreationException.class, () -> c.resolve(SettersNoArguments.class));
+    }
+}
+
+class SettersNotVoid {
+    private SettersB b;
+
+    public SettersNotVoid() {
+    }
+
+    public SettersB getB() {
+        return b;
+    }
+
+    @DependencyMethod
+    public int setB(SettersB b) {
+        this.b = b;
+        return 1;
+    }
+}
+
+class SettersNoArguments {
+    private SettersB b;
+
+    public SettersNoArguments() {
+    }
+
+    public SettersB getB() {
+        return b;
+    }
+
+    @DependencyMethod
+    public void setB() { }
 }
 
 class SettersD {
