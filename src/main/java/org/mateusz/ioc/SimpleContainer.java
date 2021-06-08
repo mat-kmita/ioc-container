@@ -40,7 +40,12 @@ public class SimpleContainer implements Container {
         registeredTypes.put(instance.getClass(), new InstanceCreator<T>(instance, (Class<T>) instance.getClass(), this));
     }
 
-    public <T> T resolve(Class type) {
+    public <T> void buildUp(T instance) {
+        BuildUpCreator<T> creator = new BuildUpCreator<T>((Class<T>) instance.getClass(), this, instance);
+        creator.create();
+    }
+
+    public <T> T resolve(Class<?> type) {
         System.out.println("Resolving: " + type);
 
         if(!registeredTypes.containsKey(type)) {
