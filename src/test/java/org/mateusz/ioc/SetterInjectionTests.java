@@ -19,23 +19,23 @@ public class SetterInjectionTests {
         assertNotNull(a.getC());
     }
 
-    @Test
-    public void shouldDetectCycleWhenUsingSetterInjection() {
-        SimpleContainer c = new SimpleContainer();
+//    @Test
+//    public void shouldDetectCycleWhenUsingSetterInjection() {
+//        SimpleContainer c = new SimpleContainer();
+//
+//        c.registerType(SettersD.class, false);
+//        c.registerType(SettersE.class, false);
+//        assertThrows(Error.class, () -> c.resolve(SettersD.class));
+//    }
 
-        c.registerType(SettersD.class, false);
-        c.registerType(SettersE.class, false);
-        assertThrows(Exception.class, () -> c.resolve(SettersD.class));
-    }
-
-    @Test
-    public void shouldNotUseNotAnnotatedSetter() {
+//    @Test
+//    public void shouldNotUseNotAnnotatedSetter() {
 //        SimpleContainer c = new SimpleContainer();
 //
 //        c.registerType();
 //
 //        assertNull();
-    }
+//    }
 }
 
 class SettersD {
