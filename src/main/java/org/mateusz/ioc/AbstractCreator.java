@@ -2,10 +2,7 @@ package org.mateusz.ioc;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class AbstractCreator<To> implements ICreator<To> {
@@ -78,13 +75,12 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
             throw new Exception("No constructor found in " + this.toClass);
         }
 
-        Constructor<To> constructor = constructorList.get(0);
+        //
+//        if (!hasNoCycle(dependent, Arrays.asList(constructor.getParameterTypes()))) {
+//            throw new Exception("Dependencies cycle detected in " + this.toClass);
+//        }
 
-        if (!hasNoCycle(dependent, Arrays.asList(constructor.getParameterTypes()))) {
-            throw new Exception("Dependencies cycle detected in " + this.toClass);
-        }
-
-        return constructor;
+        return constructorList.get(0);
     }
 
     private Object createObjectFromContainer(Class<?> aClass, List<Class<?>> updatedDependent) throws Exception {
@@ -94,9 +90,9 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
     }
 
     private List<Object> constructParametersForSetter(Method setter, List<Class<?>> dependencies) throws Exception {
-        if(!hasNoCycle(dependencies, Arrays.asList(setter.getParameterTypes()))) {
-            throw new Exception("Dependencies cycle detected in " + this.toClass + " in @DependencyMethod method " + setter.getName());
-        }
+//        if(!hasNoCycle(dependencies, Arrays.asList(setter.getParameterTypes()))) {
+//            throw new Exception("Dependencies cycle detected in " + this.toClass + " in @DependencyMethod method " + setter.getName());
+//        }
 
         List<Object> list = new ArrayList<>();
         for (Class<?> aClass : setter.getParameterTypes()) {
@@ -107,6 +103,10 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
     }
 
     protected To createObject(List<Class<?>> dependent) throws Exception {
+        if(!hasNoCycle(dependent, Collections.singletonList(toClass))) {
+            throw new Exception("Cycle detected in " + toClass);
+        }
+
         Constructor<To> constructor = null;
         try {
             constructor = findDependencyConstructor().orElse(findBestMatchConstructor(dependent));
