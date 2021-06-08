@@ -105,6 +105,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         return constructorList.get(0);
     }
 
+    // Auxiliary method to declutter createObject()
     private Object createObjectFromContainer(Class<?> aClass, List<Class<?>> updatedDependent)
             throws
             NotInContainerException {
@@ -114,6 +115,8 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         return ((AbstractCreator<?>) creator).createObject(updatedDependent);
     }
 
+    // Auxiliary method to declutter createObject()
+    // Resolves dependencies specified by @DependencyMethod setter's parameters
     private List<Object> constructParametersForSetter(Method setter, List<Class<?>> dependencies) {
         List<Object> list = new ArrayList<>();
         for (Class<?> aClass : setter.getParameterTypes()) {
@@ -128,6 +131,9 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
             throw new DependenciesCycleException(toClass);
         }
 
+        // We need constructor to create an object
+        // If there is any @DependencyConstructor present then it will be used
+        // Otherwise use best matching one
         Constructor<To> constructor = null;
         try {
             constructor = findAnnotatedConstructor().orElse(findBestMatchConstructor(dependent));
@@ -136,17 +142,19 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
             throw new ObjectCreationException(toClass);
         }
 
+        // Add this class to dependencies list
         List<Class<?>> updatedDependent = new ArrayList<>(dependent);
         updatedDependent.add(this.toClass);
 
         try {
+            // Use chosen constructor to create a new instance of To type
+            // Resolve other dependencies first
              final To instance = constructor
-                    .newInstance(
-                            Arrays.stream(constructor.getParameterTypes())
+                    .newInstance(Arrays.stream(constructor.getParameterTypes())
                                     .map(aClass -> createObjectFromContainer(aClass, updatedDependent))
                                     .toArray());
 
-
+             // Now resolve dependencies specified by @DepenedencyMethod setters
             for(Method setter : findDependencyMethodSetters()) {
                 List<Object> parameters = constructParametersForSetter(setter, updatedDependent);
                 setter.invoke(instance, parameters.toArray());
