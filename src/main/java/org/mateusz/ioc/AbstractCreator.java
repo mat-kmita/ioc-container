@@ -24,7 +24,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         this.container = container;
     }
 
-    private List<Constructor<To>> getAllConstructors() {
+    protected List<Constructor<To>> getAllConstructors() {
         return Arrays.stream(toClass.getConstructors())
                 .map(c -> {
                     try {
@@ -81,7 +81,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         return setters;
     }
 
-    private boolean hasNoCycle(List<Class<?>> dependent, List<Class<?>> parameters) {
+    protected boolean hasNoCycle(List<Class<?>> dependent, List<Class<?>> parameters) {
         return parameters.stream().noneMatch(dependent::contains);
     }
 
@@ -106,7 +106,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
     }
 
     // Auxiliary method to declutter createObject()
-    private Object createObjectFromContainer(Class<?> aClass, List<Class<?>> updatedDependent)
+    protected Object createObjectFromContainer(Class<?> aClass, List<Class<?>> updatedDependent)
             throws
             NotInContainerException {
 
@@ -117,7 +117,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
 
     // Auxiliary method to declutter createObject()
     // Resolves dependencies specified by @DependencyMethod setter's parameters
-    private List<Object> constructParametersForSetter(Method setter, List<Class<?>> dependencies) {
+    protected List<Object> constructParametersForSetter(Method setter, List<Class<?>> dependencies) {
         List<Object> list = new ArrayList<>();
         for (Class<?> aClass : setter.getParameterTypes()) {
             Object objectFromContainer = this.createObjectFromContainer(aClass, dependencies);
