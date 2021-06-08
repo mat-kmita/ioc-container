@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class AbstractCreator<To> implements ICreator<To> {
@@ -44,6 +46,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
     }
 
     protected Optional<Constructor<To>> findAnnotatedConstructor() throws DependencyConstructorException {
+
         List<Constructor<To>> annotatedConstructors = this.getAllConstructors().stream()
                 .filter(c -> c.isAnnotationPresent(DependencyConstructor.class))
                 .collect(Collectors.toList());
@@ -54,6 +57,14 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
 
         if (annotatedConstructors.size() < 1) return Optional.empty();
         return Optional.ofNullable(annotatedConstructors.get(0));
+    }
+
+    protected List<Method> findDependencyMethodSetters() {
+        return Arrays.stream(this.toClass.getMethods())
+                .filter(method -> method.isAnnotationPresent(DependencyMethod.class))
+                .filter(method -> method.getReturnType().equals(Void.TYPE))
+                .filter(method -> method.getParameterCount() > 0)
+                .collect(Collectors.toList());
     }
 
     private boolean hasNoCycle(List<Class<?>> dependent, List<Class<?>> parameters) {
@@ -77,13 +88,7 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
             throw new NoConstructorInBeanException(this.toClass);
         }
 
-        Constructor<To> constructor = constructorList.get(0);
-
-        if (!hasNoCycle(dependent, Arrays.asList(constructor.getParameterTypes()))) {
-            throw new DependenciesCycleException(this.toClass);
-        }
-
-        return constructor;
+        return constructorList.get(0);
     }
 
     private Object createObjectFromContainer(Class<?> aClass, List<Class<?>> updatedDependent)
@@ -95,7 +100,20 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         return ((AbstractCreator<?>) creator).createObject(updatedDependent);
     }
 
+    private List<Object> constructParametersForSetter(Method setter, List<Class<?>> dependencies) {
+        List<Object> list = new ArrayList<>();
+        for (Class<?> aClass : setter.getParameterTypes()) {
+            Object objectFromContainer = this.createObjectFromContainer(aClass, dependencies);
+            list.add(objectFromContainer);
+        }
+        return list;
+    }
+
     protected To createObject(List<Class<?>> dependent)  {
+        if(!hasNoCycle(dependent, Collections.singletonList(toClass))) {
+            throw new DependenciesCycleException(toClass);
+        }
+
         Constructor<To> constructor = null;
         try {
             constructor = findAnnotatedConstructor().orElse(findBestMatchConstructor(dependent));
@@ -108,11 +126,19 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         updatedDependent.add(this.toClass);
 
         try {
-            return constructor
+             final To instance = constructor
                     .newInstance(
                             Arrays.stream(constructor.getParameterTypes())
                                     .map(aClass -> createObjectFromContainer(aClass, updatedDependent))
                                     .toArray());
+
+
+            for(Method setter : findDependencyMethodSetters()) {
+                List<Object> parameters = constructParametersForSetter(setter, updatedDependent);
+                setter.invoke(instance, parameters.toArray());
+            }
+
+            return instance;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
             throw new ObjectCreationException(toClass);
