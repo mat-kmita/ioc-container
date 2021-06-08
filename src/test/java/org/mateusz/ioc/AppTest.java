@@ -1,6 +1,9 @@
 package org.mateusz.ioc;
 
 import org.junit.jupiter.api.Test;
+import org.mateusz.ioc.exceptions.NoConstructorInBeanException;
+import org.mateusz.ioc.exceptions.NotInContainerException;
+import org.mateusz.ioc.exceptions.ObjectCreationException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -51,14 +54,14 @@ public class AppTest
     @Test
     public void shouldThrowExceptionForUnregisteredType() {
         SimpleContainer container = new SimpleContainer();
-        assertThrows(IllegalArgumentException.class, () -> container.resolve(A.class));
+        assertThrows(NotInContainerException.class, () -> container.resolve(A.class));
     }
 
     @Test
     public void shouldThrowErrorForNotFoundConstructor() {
         SimpleContainer container = new SimpleContainer();
         container.registerType(A.class, D.class, false);
-        assertThrows(Error.class, () -> container.resolve(A.class));
+        assertThrows(ObjectCreationException.class, () -> container.resolve(A.class));
     }
 }
 
