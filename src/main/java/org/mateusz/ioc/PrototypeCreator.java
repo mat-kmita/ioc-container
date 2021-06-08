@@ -10,11 +10,6 @@ public class PrototypeCreator<To> extends AbstractCreator<To> {
 
     @Override
     public To create() {
-        try {
-            return super.createObject(new ArrayList<>());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new Error("Error while creating an object of class " + this.toClass);
-        }
+        return super.createObject(new ArrayList<>());
     }
 }

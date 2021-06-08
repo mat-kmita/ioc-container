@@ -23,7 +23,7 @@ public class SingletonCreator<To> extends AbstractCreator<To> {
     }
 
     @Override
-    protected To createObject(List<Class<?>> dependent) throws Exception {
+    protected To createObject(List<Class<?>> dependent)  {
         synchronized (this) {
             if (instance == null) {
                 instance = super.createObject(dependent);
