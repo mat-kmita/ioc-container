@@ -3,11 +3,9 @@ package org.mateusz.ioc;
 import org.junit.jupiter.api.Test;
 import org.mateusz.ioc.exceptions.DependenciesCycleException;
 import org.mateusz.ioc.exceptions.ObjectCreationException;
-import org.mateusz.ioc.exceptions.setter_injection.DependencyMethodException;
 
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SetterInjectionTests {
 
