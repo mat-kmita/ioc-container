@@ -1,6 +1,8 @@
 package org.mateusz.ioc;
 
 import org.mateusz.ioc.exceptions.*;
+import org.mateusz.ioc.exceptions.setter_injection.NoArgumentsDependencyMethodException;
+import org.mateusz.ioc.exceptions.setter_injection.NotVoidDependencyMethodException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -59,12 +61,24 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
         return Optional.ofNullable(annotatedConstructors.get(0));
     }
 
-    protected List<Method> findDependencyMethodSetters() {
-        return Arrays.stream(this.toClass.getMethods())
+    protected List<Method> findDependencyMethodSetters()
+            throws
+            NotVoidDependencyMethodException,
+            NoArgumentsDependencyMethodException {
+
+        List<Method> setters = Arrays.stream(this.toClass.getMethods())
                 .filter(method -> method.isAnnotationPresent(DependencyMethod.class))
-                .filter(method -> method.getReturnType().equals(Void.TYPE))
-                .filter(method -> method.getParameterCount() > 0)
                 .collect(Collectors.toList());
+
+        for(Method setter : setters) {
+            if(!setter.getReturnType().equals(Void.TYPE)) {
+                throw new NotVoidDependencyMethodException(toClass, setter.getName());
+            } else if(setter.getParameterCount() < 1) {
+                throw new NoArgumentsDependencyMethodException(toClass, setter.getName());
+            }
+        }
+
+        return setters;
     }
 
     private boolean hasNoCycle(List<Class<?>> dependent, List<Class<?>> parameters) {
@@ -139,7 +153,8 @@ public abstract class AbstractCreator<To> implements ICreator<To> {
             }
 
             return instance;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                NoArgumentsDependencyMethodException | NotVoidDependencyMethodException e) {
             e.printStackTrace();
             throw new ObjectCreationException(toClass);
         }
